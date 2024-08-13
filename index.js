@@ -14,6 +14,8 @@ app.use(cors());
 // Routes
 const userRoute = require('./routes/user');
 
+
+
 // Connect to db
 mongoose.connect(process.env.DB_URL)
   .then(() => {
@@ -25,7 +27,7 @@ mongoose.connect(process.env.DB_URL)
 
 app.get('/', function (req, res) {
   res.status(200).json({
-    msg: "Welcome to nodejs"
+    msg: "Welcome, your app is working well"
   })
 })
 
