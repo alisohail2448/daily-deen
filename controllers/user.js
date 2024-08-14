@@ -69,7 +69,7 @@ const login = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
-    const user = await SpatialUser.findOne({ phone: phone });
+    const user = await SpatialUser.findOne({ phone });
 
     if (!user) {
       return res.status(401).json({
