@@ -3,16 +3,17 @@ const express = require('express')
 const app = express()
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose')
-const fileUpload = require('express-fileupload');
+// const fileUpload = require('express-fileupload');
 const cors = require('cors');
 
 app.use(bodyParser.json())
-app.use(fileUpload());
+// app.use(fileUpload());
 app.use(express.static('uploads'));
 app.use(cors());
 
 // Routes
 const userRoute = require('./routes/user');
+const uploadRoute = require('./routes/upload');
 
 
 
@@ -31,7 +32,8 @@ app.get('/', function (req, res) {
   })
 })
 
-app.use('/auth', userRoute)
+app.use('/auth', userRoute);
+app.use('/upload', uploadRoute);
 
 
 const PORT = process.env.PORT
