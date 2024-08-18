@@ -95,6 +95,7 @@ const login = async (req, res) => {
 
     return res.status(200).json({
       msg: "Login successful",
+      user: user,
       token: token,
     });
   } catch (error) {
@@ -116,7 +117,7 @@ const getSpatialProfileById = async (req, res) => {
 
     res.status(200).json({
       msg: "User profile fetched successfully",
-      data: user,
+      user: user,
     });
   } catch (error) {
     res.status(500).json({
