@@ -53,8 +53,10 @@ const signUp = async (req, res) => {
           : "subadmin",
     });
 
+
     return res.status(200).json({
       msg: "Account created successfully",
+      success: true,
       data: { user },
     });
   } catch (error) {
