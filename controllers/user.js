@@ -132,21 +132,21 @@ const getSpatialProfileById = async (req, res) => {
 const editSpatialProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const { updates } = req.body;
 
-    const user = await SpatialUser.findById(id);
+    const user = await SpatialUser.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true, runValidators: true }   
+    );
 
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    Object.assign(user, updates);
-
-    await user.save();
-
     res.status(200).json({
       msg: "User profile updated successfully",
-      data: user,
+      user: user,
     });
   } catch (error) {
     res.status(500).json({

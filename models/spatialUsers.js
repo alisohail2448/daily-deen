@@ -1,87 +1,75 @@
-const mongoose = require("mongoose");
+  const mongoose = require("mongoose");
 
-const upiSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  qr: {
-    type: String,
-    required: true,
-  },
-});
-
-const messageSchema = new mongoose.Schema({
-  sender: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  content: {
-    type: String,
-    required: true,
-  },
-  timestamp: {
-    type: Date,
-    required: true,
-    default: Date.now,
-  },
-});
-
-const spatialUserSchema = new mongoose.Schema(
-  {
-    name: {
+  const upiSchema = new mongoose.Schema({
+    id: {
       type: String,
-      required: true,
       trim: true,
     },
-    phone: {
+    qr: {
       type: String,
-      required: true,
-      match: /^[0-9]{10}$/,
+    },
+  });
+
+  const messageSchema = new mongoose.Schema({
+    sender: {
+      type: String,
       trim: true,
     },
-    email: {
-      type: String,
-      trim: true,
-      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    },
-    designation: {
-      type: String,
-      enum: ["Aalim", "Hafiz", "Muazzan"],
-    },
-    mosqueName: {
+    content: {
       type: String,
     },
-    mosqueArea: {
-      type: String,
+    timestamp: {
+      type: Date,
+      default: Date.now,
     },
-    password: {
-      type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ["admin", "subadmin", "user"],
-      required: true,
-    },
-    users: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "SpatialUser",
+  });
+
+  const spatialUserSchema = new mongoose.Schema(
+    {
+      name: {
+        type: String,
+        trim: true,
       },
-    ],
-    upi: upiSchema,
-    profilePic: {
-      type: String,
-      match: /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/,
+      phone: {
+        type: String,
+        trim: true,
+      },
+      email: {
+        type: String,
+        trim: true,
+      },
+      designation: {
+        type: String,
+        enum: ["Aalim", "Hafiz", "Muazzan"],
+      },
+      mosqueName: {
+        type: String,
+      },
+      mosqueArea: {
+        type: String,
+      },
+      password: {
+        type: String,
+      },
+      role: {
+        type: String,
+        enum: ["admin", "subadmin", "user"],
+      },
+      users: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "SpatialUser",
+        },
+      ],
+      upi: upiSchema,
+      profilePic: {
+        type: String,
+      },
+      messages: [messageSchema],
     },
-    messages: [messageSchema],
-  },
-  {
-    timestamps: true,
-  }
-);
+    {
+      timestamps: true,
+    }
+  );
 
-module.exports = mongoose.model("SpatialUser", spatialUserSchema);
+  module.exports = mongoose.model("SpatialUser", spatialUserSchema);
