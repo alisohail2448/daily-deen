@@ -11,5 +11,8 @@ router.get('/spatial/:id', authenticateToken, userControler.getSpatialProfileByI
 router.put('/spatial/:id', authenticateToken, userControler.editSpatialProfile);
 
 router.post('/user/add', authenticateToken, userControler.addUser);
+router.get('/user/subadmin/:adminId', authenticateToken, userControler.getSubAdminUsers);
+router.get('/user/:adminId', authenticateToken, userControler.getRegularUsers);
+
 
 module.exports = router;

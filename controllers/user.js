@@ -159,7 +159,7 @@ const editSpatialProfile = async (req, res) => {
 
 const addUser = async (req, res) => {
   try {
-    const { name, phone, role, adminId } = req.body;
+    const { name, phone, role, adminId, designation } = req.body;
 
     const existingUser = await SpatialUser.findOne({ phone });
 
@@ -182,6 +182,7 @@ const addUser = async (req, res) => {
       phone,
       password: hashedPassword,
       role: role ?? "user",
+      designation: role === 'subadmin' ? 'Muazzan' : designation,
     });
 
     await user.save();
@@ -207,10 +208,75 @@ const addUser = async (req, res) => {
   }
 };
 
+const getSubAdminUsers = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+
+    const admin = await SpatialUser.findById(adminId).populate({
+      path: 'users',
+      match: { role: 'subadmin' },
+    });
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin user not found" });
+    }
+
+    const subAdminUsers = admin.users;
+
+    if (subAdminUsers.length === 0) {
+      return res.status(404).json({ msg: "No sub-admin users found" });
+    }
+
+    res.status(200).json({
+      msg: "Sub-admin users retrieved successfully",
+      data: subAdminUsers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const getRegularUsers = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+
+    const admin = await SpatialUser.findById(adminId).populate({
+      path: 'users',
+      match: { role: 'user' }, 
+    });
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin user not found" });
+    }
+
+    const regularUsers = admin.users;
+
+    if (regularUsers.length === 0) {
+      return res.status(404).json({ msg: "No regular users found" });
+    }
+
+    res.status(200).json({
+      msg: "Regular users retrieved successfully",
+      data: regularUsers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   signUp,
   login,
   getSpatialProfileById,
   editSpatialProfile,
   addUser,
+  getSubAdminUsers,
+  getRegularUsers
 };
