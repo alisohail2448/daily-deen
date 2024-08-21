@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const SpatialUser = require("../models/spatialUsers");
 const { spatialUserSchema } = require("../helper/validation");
 const wbm = require('wbm');
+const { sendBySms, sendSms } = require("../helper/twillio");
 
 const sendWhatsAppInvite = async (phoneNumber, message) => {
   wbm
@@ -158,7 +159,7 @@ const editSpatialProfile = async (req, res) => {
 
 const addUser = async (req, res) => {
   try {
-    const { name, phone, adminId } = req.body;
+    const { name, phone, role, adminId } = req.body;
 
     const existingUser = await SpatialUser.findOne({ phone });
 
@@ -180,7 +181,7 @@ const addUser = async (req, res) => {
       name,
       phone,
       password: hashedPassword,
-      role: "user",
+      role: role ?? "user",
     });
 
     await user.save();
@@ -188,9 +189,7 @@ const addUser = async (req, res) => {
     spatialUser.users.push(user._id);
     await spatialUser.save();
 
-    // const inviteMessage = `Hello ${name}, your account has been created. Your password is: ${password}. Please log in to access your account.`;
-
-    // await sendWhatsAppInvite(phone, inviteMessage);
+    await sendSms(phone, password);
 
     res.status(201).json({
       msg: "Normal user created, password generated, and invite sent successfully",

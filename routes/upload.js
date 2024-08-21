@@ -17,7 +17,7 @@ router.post("/image", authenticateToken, upload.single("image"), async (req, res
 
     res.status(200).json({
       msg: "Image uploaded successfully",
-      data: result?.url,
+      url: result?.url,
     });
   } catch (error) {
     res.status(500).json({
