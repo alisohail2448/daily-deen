@@ -281,7 +281,7 @@ const getMyAdmin = async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    if (user.role !== "user") {
+    if (user.role !== "user" && user?.role !== 'subadmin') {
       return res
         .status(403)
         .json({ msg: "Only regular users can perform this action" });
@@ -351,6 +351,67 @@ const removeUserFromCommunity = async (req, res) => {
   }
 };
 
+const addMessageToSpatialUser = async (req, res) => {
+  try {
+    const { adminId } = req.params; 
+    const { sender, content } = req.body;
+
+    const user = await SpatialUser.findByIdAndUpdate(
+      adminId,
+      {
+        $push: {
+          messages: {
+            sender,
+            content,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    res.status(200).json({
+      msg: "Message added successfully",
+      user: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const getMessages = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+
+    const user = await SpatialUser.findById(adminId)
+      .populate('messages.sender')
+      .select('messages')
+      .lean();
+
+    if (!user) {  
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    const sortedMessages = user.messages.sort((a, b) => a.timestamp - b.timestamp);
+
+    res.status(200).json({
+      msg: "Messages retrieved successfully",
+      messages: sortedMessages,
+    });
+  } catch (error) {
+    res.status(500).json({
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   signUp,
   login,
@@ -361,4 +422,6 @@ module.exports = {
   getRegularUsers,
   getMyAdmin,
   removeUserFromCommunity,
+  addMessageToSpatialUser,
+  getMessages,
 };

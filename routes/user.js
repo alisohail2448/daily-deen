@@ -17,4 +17,8 @@ router.get('/admin/:userId', authenticateToken, userControler.getMyAdmin);
 router.get('/admin/:adminId/:userId', authenticateToken, userControler.getMyAdmin);
 router.delete('/admin/:adminId/user/:userId', authenticateToken, userControler.removeUserFromCommunity);
 
+router.post('/message/:adminId', authenticateToken, userControler.addMessageToSpatialUser);
+router.get('/message/:adminId', authenticateToken, userControler.getMessages);
+
+
 module.exports = router;

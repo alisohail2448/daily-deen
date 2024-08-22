@@ -11,9 +11,9 @@
   });
 
   const messageSchema = new mongoose.Schema({
-    sender: {
-      type: String,
-      trim: true,
+    sender:    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SpatialUser",
     },
     content: {
       type: String,
