@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SpatialUser = require("../models/spatialUsers");
 const { spatialUserSchema } = require("../helper/validation");
-const wbm = require('wbm');
+const wbm = require("wbm");
 const { sendBySms, sendSms } = require("../helper/twillio");
 
 const sendWhatsAppInvite = async (phoneNumber, message) => {
@@ -53,7 +53,6 @@ const signUp = async (req, res) => {
           ? "admin"
           : "subadmin",
     });
-
 
     return res.status(200).json({
       msg: "Account created successfully",
@@ -112,7 +111,7 @@ const login = async (req, res) => {
 const getSpatialProfileById = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await SpatialUser.findById(id).populate('users');
+    const user = await SpatialUser.findById(id).populate("users");
 
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
@@ -138,7 +137,7 @@ const editSpatialProfile = async (req, res) => {
     const user = await SpatialUser.findByIdAndUpdate(
       id,
       { $set: updates },
-      { new: true, runValidators: true }   
+      { new: true }
     );
 
     if (!user) {
@@ -164,7 +163,9 @@ const addUser = async (req, res) => {
     const existingUser = await SpatialUser.findOne({ phone });
 
     if (existingUser) {
-      return res.status(400).json({ msg: "Phone number is already registered" });
+      return res
+        .status(400)
+        .json({ msg: "Phone number is already registered" });
     }
 
     const spatialUser = await SpatialUser.findById(adminId);
@@ -182,7 +183,7 @@ const addUser = async (req, res) => {
       phone,
       password: hashedPassword,
       role: role ?? "user",
-      designation: role === 'subadmin' ? 'Muazzan' : designation,
+      designation: role === "subadmin" ? "Muazzan" : designation,
     });
 
     await user.save();
@@ -213,8 +214,8 @@ const getSubAdminUsers = async (req, res) => {
     const { adminId } = req.params;
 
     const admin = await SpatialUser.findById(adminId).populate({
-      path: 'users',
-      match: { role: 'subadmin' },
+      path: "users",
+      match: { role: "subadmin" },
     });
 
     if (!admin) {
@@ -244,8 +245,8 @@ const getRegularUsers = async (req, res) => {
     const { adminId } = req.params;
 
     const admin = await SpatialUser.findById(adminId).populate({
-      path: 'users',
-      match: { role: 'user' }, 
+      path: "users",
+      match: { role: "user" },
     });
 
     if (!admin) {
@@ -270,6 +271,85 @@ const getRegularUsers = async (req, res) => {
   }
 };
 
+const getMyAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await SpatialUser.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (user.role !== "user") {
+      return res
+        .status(403)
+        .json({ msg: "Only regular users can perform this action" });
+    }
+
+    const admin = await SpatialUser.findOne({ users: userId });
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    res.status(200).json({
+      msg: "Admin retrieved successfully",
+      data: admin,
+    });
+  } catch (error) {
+    res.status(500).json({
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const removeUserFromCommunity = async (req, res) => {
+  try {
+    const { userId, adminId } = req.params;
+
+    const admin = await SpatialUser.findById(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin user not found" });
+    }
+
+    const user = await SpatialUser.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Check if the user is part of the admin's community
+    const userIndex = admin.users.indexOf(userId);
+    if (userIndex === -1) {
+      return res
+        .status(400)
+        .json({ msg: "User is not part of this community" });
+    }
+
+    // Remove user from the admin's users array
+    admin.users.splice(userIndex, 1);
+    await admin.save();
+
+    // Delete the user from the database
+    await SpatialUser.findByIdAndDelete(userId);
+
+    res
+      .status(200)
+      .json({
+        status: 200,
+        msg: "User removed from community and deleted successfully",
+      });
+  } catch (error) {
+    res.status(500).json({
+      status: 400,
+      msg: "Internal server error",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   signUp,
@@ -278,5 +358,7 @@ module.exports = {
   editSpatialProfile,
   addUser,
   getSubAdminUsers,
-  getRegularUsers
+  getRegularUsers,
+  getMyAdmin,
+  removeUserFromCommunity,
 };
