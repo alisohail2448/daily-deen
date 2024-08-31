@@ -4,6 +4,7 @@ const SpatialUser = require("../models/spatialUsers");
 const { spatialUserSchema } = require("../helper/validation");
 const wbm = require("wbm");
 const { sendBySms, sendSms } = require("../helper/twillio");
+const { sendOtp, verifyOtp } = require("../helper/otp");
 
 const sendWhatsAppInvite = async (phoneNumber, message) => {
   wbm
@@ -22,68 +23,37 @@ const generateReadablePassword = (name) => {
   return `${name}${randomNumber}`;
 };
 
-const signUp = async (req, res) => {
-  try {
-    const { error } = spatialUserSchema.validate(req.body);
-
-    if (error) {
-      return res.status(400).json({
-        msg: error.details[0].message,
-      });
-    }
-    const { name, phone, password, designation } = req.body;
-
-    const spatialUserInfo = await SpatialUser.findOne({ phone: phone });
-
-    if (spatialUserInfo) {
-      return res.status(400).json({
-        msg: "Phone already registered.",
-      });
-    }
-
-    const hashPassword = await bcrypt.hashSync(password, 10);
-
-    const user = await SpatialUser.create({
-      name: name,
-      phone: phone,
-      password: hashPassword,
-      designation: designation,
-      role:
-        designation === "Aalim" || designation === "Hafiz"
-          ? "admin"
-          : "subadmin",
-    });
-
-    return res.status(200).json({
-      msg: "Account created successfully",
-      success: true,
-      data: { user },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      msg: "Internal server error, please try again",
-      error: error,
-    });
-  }
+const sendOtpToUser = async (req, res) => {
+  const { phone } = req.body;
+  const result = await sendOtp(phone);
+  return res.status(result.success ? 200 : 500).json(result);
 };
 
-const login = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, otp } = req.body;
 
-    const user = await SpatialUser.findOne({ phone });
-
-    if (!user) {
-      return res.status(401).json({
-        msg: "Invalid credentials",
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        msg: "Otp is required to login!",
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const otpResult = await verifyOtp(phone, otp);
 
-    if (!isMatch) {
+    if (!otpResult.success) {
       return res.status(401).json({
-        msg: "Invalid credentials",
+        success: false,
+        msg: "Otp is not valid!",
+      });
+    }
+
+    let user = await SpatialUser.findOne({ phone });
+
+    if (!user) {
+      user = await SpatialUser.create({
+        phone,
       });
     }
 
@@ -96,12 +66,14 @@ const login = async (req, res) => {
     );
 
     return res.status(200).json({
-      msg: "Login successful",
+      success: true,
+      msg: "User logged in successful",
       user: user,
       token: token,
     });
   } catch (error) {
     return res.status(500).json({
+      success: false,
       msg: "Internal server error",
       error: error.message,
     });
@@ -134,6 +106,12 @@ const editSpatialProfile = async (req, res) => {
     const { id } = req.params;
     const { updates } = req.body;
 
+    if (updates.designation) {
+      updates.role = updates.designation === "Aalim" ? "admin" : "user";
+    }
+
+    updates.isOnboarded = true;
+
     const user = await SpatialUser.findByIdAndUpdate(
       id,
       { $set: updates },
@@ -145,11 +123,13 @@ const editSpatialProfile = async (req, res) => {
     }
 
     res.status(200).json({
+      success: true,
       msg: "User profile updated successfully",
       user: user,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       msg: "Internal server error",
       error: error.message,
     });
@@ -281,7 +261,7 @@ const getMyAdmin = async (req, res) => {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    if (user.role !== "user" && user?.role !== 'subadmin') {
+    if (user.role !== "user" && user?.role !== "subadmin") {
       return res
         .status(403)
         .json({ msg: "Only regular users can perform this action" });
@@ -336,12 +316,10 @@ const removeUserFromCommunity = async (req, res) => {
     // Delete the user from the database
     await SpatialUser.findByIdAndDelete(userId);
 
-    res
-      .status(200)
-      .json({
-        status: 200,
-        msg: "User removed from community and deleted successfully",
-      });
+    res.status(200).json({
+      status: 200,
+      msg: "User removed from community and deleted successfully",
+    });
   } catch (error) {
     res.status(500).json({
       status: 400,
@@ -353,7 +331,7 @@ const removeUserFromCommunity = async (req, res) => {
 
 const addMessageToSpatialUser = async (req, res) => {
   try {
-    const { adminId } = req.params; 
+    const { adminId } = req.params;
     const { sender, content } = req.body;
 
     const user = await SpatialUser.findByIdAndUpdate(
@@ -390,15 +368,17 @@ const getMessages = async (req, res) => {
     const { adminId } = req.params;
 
     const user = await SpatialUser.findById(adminId)
-      .populate('messages.sender')
-      .select('messages')
+      .populate("messages.sender")
+      .select("messages")
       .lean();
 
-    if (!user) {  
+    if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
 
-    const sortedMessages = user.messages.sort((a, b) => a.timestamp - b.timestamp);
+    const sortedMessages = user.messages.sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
 
     res.status(200).json({
       msg: "Messages retrieved successfully",
@@ -413,8 +393,8 @@ const getMessages = async (req, res) => {
 };
 
 module.exports = {
-  signUp,
-  login,
+  sendOtpToUser,
+  loginUser,
   getSpatialProfileById,
   editSpatialProfile,
   addUser,

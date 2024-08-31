@@ -48,8 +48,9 @@
       mosqueArea: {
         type: String,
       },
-      password: {
-        type: String,
+      isOnboarded: {
+        type: Boolean,
+        default: false,
       },
       role: {
         type: String,
