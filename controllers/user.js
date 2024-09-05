@@ -154,14 +154,9 @@ const addUser = async (req, res) => {
       return res.status(404).json({ msg: "Spatial user not found" });
     }
 
-    const password = generateReadablePassword(name);
-
-    const hashedPassword = await bcrypt.hashSync(password, 10);
-
     const user = new SpatialUser({
       name,
       phone,
-      password: hashedPassword,
       role: role ?? "user",
       designation: role === "subadmin" ? "Muazzan" : designation,
     });
@@ -171,7 +166,7 @@ const addUser = async (req, res) => {
     spatialUser.users.push(user._id);
     await spatialUser.save();
 
-    await sendSms(phone, password);
+    await sendSms(phone);
 
     res.status(201).json({
       msg: "Normal user created, password generated, and invite sent successfully",

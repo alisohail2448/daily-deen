@@ -8,7 +8,7 @@ console.log("phoneNumber", phoneNumber)
 
 const client = require("twilio")(accountSid, authToken);
 
-const sendSms = async (phoneNumber, password) => {
+const sendSms = async (phoneNumber) => {
 //   const newPhone = "+91" + phoneNumber;
 const newPhone = "+917249047105"
 console.log("password", password)
@@ -16,7 +16,7 @@ console.log("password", password)
     const response = await client.messages.create({
       from: phoneNumber,
       to: newPhone,
-      body: `You Added to Communtiy of Your Aalim/Hafiz. your account details are ID: ${phoneNumber}  and Password: ${password}`,
+      body: `You Added to Communtiy of Your Aalim/Hafiz. your account details are ID: ${phoneNumber}. do login using this number`,
     });
     console.log("Message sent successfully:", response.sid);
   } catch (error) {
